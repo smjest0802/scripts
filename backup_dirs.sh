@@ -2,21 +2,51 @@
 
 # Exit as soon as any line in the script fails
 # Prints each command executed
-set -ex
+#set -ex
 
-backed_up_location=""
-local_backed_up="/share/backups/files/"
+# A POSIX variable
+OPTIND=1         # Reset in case getopts has been used previously in the shell.
 
-# ToDo: Add Targeted home locations later.
-#to_backup="/share/test/ /share/challenge/ /share/utility_scripts/ /home/shawn/"
-to_backup="/share/test/ /share/challenge/ /share/utility_scripts/"
+# Initialize Variables
+local_backup_dir=""
+network_backup_dir=""
+file_prefix=""
 
-network_dir="/shares/Linux/ubuntu/backups"
+# TBD Add help text.
+while getopts "h?p:l:n:" opt; do
+    case "$opt" in
+    h|\?)
+        echo "Show help here"
+        exit 0
+        ;;
+    p)  file_prefix=$OPTARG
+        ;;
+    l)  local_backup_dir=$OPTARG
+        ;;
+    n)  network_backup_dir=$OPTARG
+        ;;
+    esac
+done
+
+# Shift to the first non-optional parameter
+shift "$((OPTIND-1))"
+
+to_backup=$@
+
 
 # Create Tar ball filename
-filename="backup_file_$(date +'%Y%m%d%H%M%S').gz"
+filename="${file_prefix}$(date +'%Y%m%d%H%M%S').gz"
 
 # Tar up directories
-tar -cvzf ${local_backed_up}${filename} ${to_backup}
+echo "Objects to add to tar: ${to_backup}"
+echo "Begin creating tar file: ${local_backup_dir}${filename}"
+tar -cvzf ${local_backup_dir}${filename} ${to_backup}
+echo "Done creating tar file."
+echo
 
-scp ${local_backed_up}${filename} sshd@10.0.0.3:${network_dir}
+# Network location
+echo "Save file to network drive '${network_backup_dir}' (wait for password prompt)"
+user=sshd
+host=10.0.0.3
+scp ${local_backup_dir}${filename} ${user}@${host}:${network_backup_dir}
+echo "Done saving file on network drive"
