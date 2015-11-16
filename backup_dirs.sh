@@ -1,29 +1,37 @@
 #!/usr/bin/env bash
 
 # Exit as soon as any line in the script fails
-# Prints each command executed
+# Print each command executed
 #set -ex
 
 # A POSIX variable
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
 
-# Initialize Variables
-local_backup_dir=""
-network_backup_dir=""
-file_prefix=""
+scriptName=`basename "$0"`
 
-# TBD Add help text.
+# Initialize Variables
+localBackupDir=""
+networkBackupDir=""
+filePrefix=""
+
 while getopts "h?p:l:n:" opt; do
     case "$opt" in
     h|\?)
-        echo "Show help here"
+        echo -e "${scriptName}\tScript creates a tar ball of the specifed directories."
+        echo -e "\t$ ./${scriptName} [-h?] -f <File Prefix> -l <Local Directory> [-n <Network Directory>]"
+        echo -e "\tThe file format of the created file is '<File Prefix>YYYYMMDDhhmmss.gz'"
+        echo ""
+        echo -e "\t-h / -?\t\tDisplay the help text"
+        echo -e "\t-l\t\tSpecify the local directory to create the tar ball in"
+        echo -e "\t-n\t\tSpecify the network directory to send the tar ball to"
+
         exit 0
         ;;
-    p)  file_prefix=$OPTARG
+    p)  filePrefix=$OPTARG
         ;;
-    l)  local_backup_dir=$OPTARG
+    l)  localBackupDir=$OPTARG
         ;;
-    n)  network_backup_dir=$OPTARG
+    n)  networkBackupDir=$OPTARG
         ;;
     esac
 done
@@ -31,22 +39,39 @@ done
 # Shift to the first non-optional parameter
 shift "$((OPTIND-1))"
 
-to_backup=$@
+toBackup=$@
 
+# Confirm required fields are populated.
+if [[ -z ${filePrefix} ]] # File prefix
+then
+    echo Need to specify a file name prefix
+    exit 1
+fi
+
+if [[ -z ${localBackupDir} ]] # Local backup directory
+then
+    echo Need to specify a local directory to create the tar ball in.
+    exit 1
+fi
 
 # Create Tar ball filename
-filename="${file_prefix}$(date +'%Y%m%d%H%M%S').gz"
+filename="${filePrefix}$(date +'%Y%m%d%H%M%S').gz"
 
 # Tar up directories
-echo "Objects to add to tar: ${to_backup}"
-echo "Begin creating tar file: ${local_backup_dir}${filename}"
-tar -cvzf ${local_backup_dir}${filename} ${to_backup}
+echo "Objects to add to tar: ${toBackup}"
+echo "Begin creating tar file: ${localBackup_dir}${filename}"
+tar -cvzf ${localBackupDir}${filename} ${toBackup}
 echo "Done creating tar file."
 echo
 
 # Network location
-echo "Save file to network drive '${network_backup_dir}' (wait for password prompt)"
 user=sshd
 host=10.0.0.3
-scp ${local_backup_dir}${filename} ${user}@${host}:${network_backup_dir}
-echo "Done saving file on network drive"
+if [[ ${networkBackupDir} ]]
+then
+    echo "Saving file to network drive '${user}@%{host}:${networkBackupDir}' (wait for password prompt)"
+    # Will get prompted for password if not using ssh keys between host and target.
+    # For full automation, make sure to setup ssh keys.
+    scp ${localBackupDir}${filename} ${user}@${host}:${networkBackupDir}
+    echo "Done saving file on network drive"
+fi
