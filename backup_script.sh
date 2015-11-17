@@ -19,7 +19,7 @@ host=""
 printHelp ()
 {
     echo -e "${scriptName}\tScript creates a tar ball of the specifed directories."
-    echo -e "\t$ ./${scriptName} [-h?] -f <File Prefix> -l <Local Directory> [-n <Network Directory>]"
+    echo -e "\t$ ./${scriptName} [-h?] -f <File Prefix> -l <Local Directory> [-u <user> -d <host> -n <Network Directory>]  <What to Backup>"
     echo -e "\tThe file format of the created file is '<File Prefix>YYYYMMDDhhmmss.gz'"
     echo ""
     echo -e "\t-h / -?\t\tDisplay the help text"
