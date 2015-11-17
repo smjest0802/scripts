@@ -8,4 +8,8 @@ The script [backup_script.sh](https://github.com/smjest0802/scripts/blob/master/
 $ ./backup_script.sh -u sshd -d 10.0.0.3 -p test_backup_ -l /share/local_backup/ -n /shares/Linux/ubuntu/backups/ /share/test/
 ```
 
-The script [all_backup_script.sh](https://github.com/smjest0802/scripts/blob/master/all_backup_script.sh) makes canned calls with different parameters to [backup_script.sh](https://github.com/smjest0802/scripts/blob/master/backup_script.sh), allowing for repeated calls with no errors.
+The script [all_backup_script.sh](https://github.com/smjest0802/scripts/blob/master/all_backup_script.sh) makes canned calls with different parameters to [backup_script.sh](https://github.com/smjest0802/scripts/blob/master/backup_script.sh), allowing for repeated calls with no errors. Note: This script contains pre-canned values that are useful for me, will require editing before running.
+
+```
+$ ./all_backup_script.sh
+```
