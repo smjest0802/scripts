@@ -13,19 +13,28 @@ scriptName=`basename "$0"`
 localBackupDir=""
 networkBackupDir=""
 filePrefix=""
+user=""
+host=""
 
-while getopts "h?p:l:n:" opt; do
+printHelp ()
+{
+    echo -e "${scriptName}\tScript creates a tar ball of the specifed directories."
+    echo -e "\t$ ./${scriptName} [-h?] -f <File Prefix> -l <Local Directory> [-n <Network Directory>]"
+    echo -e "\tThe file format of the created file is '<File Prefix>YYYYMMDDhhmmss.gz'"
+    echo ""
+    echo -e "\t-h / -?\t\tDisplay the help text"
+    echo -e "\t-l\t\tLocal dir: Specify the local directory to create the tar ball in. Required to be set."
+    echo -e "\t-n\t\tNetwork dir: Specify the network directory to send the tar ball to. Must be set with User and Host."
+    echo -e "\t-u\t\tUser name: User name to use to connect to network location. Must be set with Network dir and Host."
+    echo -e "\t-d\t\tHost: Destination address to send the files to. Must be set with Network dir and Host."
+
+    exit 0
+}
+
+while getopts "h?p:l:n:u:d:" opt; do
     case "$opt" in
     h|\?)
-        echo -e "${scriptName}\tScript creates a tar ball of the specifed directories."
-        echo -e "\t$ ./${scriptName} [-h?] -f <File Prefix> -l <Local Directory> [-n <Network Directory>]"
-        echo -e "\tThe file format of the created file is '<File Prefix>YYYYMMDDhhmmss.gz'"
-        echo ""
-        echo -e "\t-h / -?\t\tDisplay the help text"
-        echo -e "\t-l\t\tSpecify the local directory to create the tar ball in"
-        echo -e "\t-n\t\tSpecify the network directory to send the tar ball to"
-
-        exit 0
+        printHelp
         ;;
     p)  filePrefix=$OPTARG
         ;;
@@ -33,6 +42,9 @@ while getopts "h?p:l:n:" opt; do
         ;;
     n)  networkBackupDir=$OPTARG
         ;;
+    u)  user=$OPTARG
+        ;;
+    d)  host=$OPTARG
     esac
 done
 
@@ -44,13 +56,15 @@ toBackup=$@
 # Confirm required fields are populated.
 if [[ -z ${filePrefix} ]] # File prefix
 then
-    echo Need to specify a file name prefix
+    echo ERROR: Need to specify a file name prefix
+    printHelp
     exit 1
 fi
 
 if [[ -z ${localBackupDir} ]] # Local backup directory
 then
-    echo Need to specify a local directory to create the tar ball in.
+    echo ERROR: Need to specify a local directory to create the tar ball in.
+    printHelp
     exit 1
 fi
 
@@ -64,12 +78,11 @@ tar -cvzf ${localBackupDir}${filename} ${toBackup}
 echo "Done creating tar file."
 echo
 
-# Network location
-user=sshd
-host=10.0.0.3
-if [[ ${networkBackupDir} ]]
+# SCP the created tar ball to the network drive.
+# Only call if all three parameters are populated.
+if [[ ${networkBackupDir} && ${user} && ${host} ]]
 then
-    echo "Saving file to network drive '${user}@%{host}:${networkBackupDir}' (wait for password prompt)"
+    echo "Saving file to network drive '${user}@${host}:${networkBackupDir}'"
     # Will get prompted for password if not using ssh keys between host and target.
     # For full automation, make sure to setup ssh keys.
     scp ${localBackupDir}${filename} ${user}@${host}:${networkBackupDir}
